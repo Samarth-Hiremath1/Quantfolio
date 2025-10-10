@@ -1,0 +1,73 @@
+# Base configuration for all environments
+service_name: "quantfolio"
+version: "1.0.0"
+
+# Database configuration
+database:
+  host: "localhost"
+  port: 5432
+  database: "quantfolio"
+  username: "postgres"
+  password: "password"
+  pool_size: 10
+  max_overflow: 20
+
+# External API configuration
+api:
+  yahoo_finance_base_url: "https://query1.finance.yahoo.com"
+  alpha_vantage_base_url: "https://www.alphavantage.co"
+  alpha_vantage_api_key: ""  # Set via environment variable
+  rate_limit_requests_per_minute: 60
+  timeout_seconds: 30
+  retry_attempts: 3
+  circuit_breaker_failure_threshold: 5
+  circuit_breaker_recovery_timeout: 60
+
+# Machine Learning configuration
+ml:
+  pytorch_device: "cpu"
+  tensorflow_device: "/CPU:0"
+  model_cache_size: 100
+  training_batch_size: 32
+  validation_split: 0.2
+  early_stopping_patience: 10
+  max_epochs: 100
+  learning_rate: 0.001
+
+# MLflow configuration
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "quantfolio-experiments"
+  model_registry_uri: "http://localhost:5000"
+  artifact_root: "./mlruns"
+  default_artifact_root: "./artifacts"
+
+# Storage configuration
+storage:
+  data_root: "./data"
+  raw_data_path: "./data/raw"
+  processed_data_path: "./data/processed"
+  features_path: "./data/features"
+  models_path: "./data/models"
+  portfolios_path: "./data/portfolios"
+  backup_enabled: true
+  backup_retention_days: 30
+
+# Monitoring configuration
+monitoring:
+  prometheus_port: 9090
+  grafana_port: 3000
+  metrics_collection_interval: 30
+  log_level: "INFO"
+  enable_distributed_tracing: true
+  alert_webhook_url: ""
+
+# Security configuration
+security:
+  enable_authentication: false
+  jwt_secret_key: "your-secret-key-change-in-production"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 24
+  api_key_header: "X-API-Key"
+  cors_origins:
+    - "*"

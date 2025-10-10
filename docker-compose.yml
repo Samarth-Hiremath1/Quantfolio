@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  data-pipeline:
+    build:
+      context: .
+      dockerfile: data_pipeline/Dockerfile
+    environment:
+      - SERVICE_NAME=data-pipeline
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    networks:
+      - quantfolio-network
+
+  models:
+    build:
+      context: .
+      dockerfile: models/Dockerfile
+    environment:
+      - SERVICE_NAME=models
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./models/artifacts:/app/artifacts
+    networks:
+      - quantfolio-network
+
+  optimizer:
+    build:
+      context: .
+      dockerfile: optimizer/Dockerfile
+    environment:
+      - SERVICE_NAME=optimizer
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    networks:
+      - quantfolio-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=api
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./config:/app/config
+    networks:
+      - quantfolio-network
+    depends_on:
+      - models
+      - optimizer
+
+  orchestration:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVICE_NAME=orchestration
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./orchestration/dags:/app/dags
+    networks:
+      - quantfolio-network
+
+  monitoring:
+    build:
+      context: .
+      dockerfile: monitoring/Dockerfile
+    ports:
+      - "3000:3000"  # Grafana
+      - "9090:9090"  # Prometheus
+    environment:
+      - SERVICE_NAME=monitoring
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./config:/app/config
+      - ./monitoring/dashboards:/app/dashboards
+    networks:
+      - quantfolio-network
+
+networks:
+  quantfolio-network:
+    driver: bridge
+
+volumes:
+  data:
+  config:
+  artifacts:

@@ -1,0 +1,55 @@
+# Development environment configuration
+debug: true
+environment: "development"
+
+# Database configuration for development
+database:
+  host: "dev-postgres"
+  port: 5432
+  database: "quantfolio_dev"
+  username: "quantfolio_user"
+  password: "dev_password"
+  pool_size: 5
+
+# API configuration for development
+api:
+  rate_limit_requests_per_minute: 100
+  timeout_seconds: 45
+
+# ML configuration for development
+ml:
+  pytorch_device: "cpu"
+  tensorflow_device: "/CPU:0"
+  training_batch_size: 32
+  max_epochs: 75
+
+# MLflow configuration for development
+mlflow:
+  tracking_uri: "http://mlflow-dev:5000"
+  experiment_name: "quantfolio-dev-experiments"
+  artifact_root: "/shared/mlruns"
+
+# Storage configuration for development
+storage:
+  data_root: "/shared/data"
+  raw_data_path: "/shared/data/raw"
+  processed_data_path: "/shared/data/processed"
+  features_path: "/shared/data/features"
+  models_path: "/shared/data/models"
+  portfolios_path: "/shared/data/portfolios"
+  backup_enabled: true
+  backup_retention_days: 7
+
+# Monitoring configuration for development
+monitoring:
+  log_level: "DEBUG"
+  metrics_collection_interval: 15
+  enable_distributed_tracing: true
+
+# Security configuration for development
+security:
+  enable_authentication: true
+  jwt_secret_key: "dev-secret-key-not-for-production"
+  cors_origins:
+    - "https://dev.quantfolio.com"
+    - "http://localhost:3000"

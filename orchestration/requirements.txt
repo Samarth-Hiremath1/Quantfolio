@@ -1,0 +1,5 @@
+# Orchestration Service requirements
+apache-airflow==2.7.0
+celery==5.3.4
+redis==5.0.1
+kubernetes==28.1.0

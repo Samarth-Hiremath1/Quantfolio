@@ -1,0 +1,63 @@
+# Production environment configuration
+debug: false
+environment: "production"
+
+# Database configuration for production
+database:
+  host: "prod-postgres-cluster"
+  port: 5432
+  database: "quantfolio_prod"
+  username: "quantfolio_prod_user"
+  # password set via environment variable
+  pool_size: 20
+  max_overflow: 40
+
+# API configuration for production
+api:
+  rate_limit_requests_per_minute: 60
+  timeout_seconds: 30
+  retry_attempts: 5
+  circuit_breaker_failure_threshold: 3
+  circuit_breaker_recovery_timeout: 120
+
+# ML configuration for production
+ml:
+  pytorch_device: "cuda"  # Use GPU in production if available
+  tensorflow_device: "/GPU:0"
+  model_cache_size: 200
+  training_batch_size: 64
+  max_epochs: 200
+
+# MLflow configuration for production
+mlflow:
+  tracking_uri: "https://mlflow.quantfolio.com"
+  experiment_name: "quantfolio-prod-experiments"
+  model_registry_uri: "https://mlflow.quantfolio.com"
+  artifact_root: "s3://quantfolio-mlflow-artifacts"
+
+# Storage configuration for production
+storage:
+  data_root: "s3://quantfolio-data"
+  raw_data_path: "s3://quantfolio-data/raw"
+  processed_data_path: "s3://quantfolio-data/processed"
+  features_path: "s3://quantfolio-data/features"
+  models_path: "s3://quantfolio-data/models"
+  portfolios_path: "s3://quantfolio-data/portfolios"
+  backup_enabled: true
+  backup_retention_days: 90
+
+# Monitoring configuration for production
+monitoring:
+  log_level: "INFO"
+  metrics_collection_interval: 60
+  enable_distributed_tracing: true
+  alert_webhook_url: "https://alerts.quantfolio.com/webhook"
+
+# Security configuration for production
+security:
+  enable_authentication: true
+  # jwt_secret_key set via environment variable
+  jwt_expiration_hours: 8  # Shorter expiration in production
+  cors_origins:
+    - "https://quantfolio.com"
+    - "https://app.quantfolio.com"
