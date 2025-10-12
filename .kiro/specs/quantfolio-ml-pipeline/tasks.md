@@ -25,7 +25,7 @@
   - Write comprehensive unit tests for all feature engineering functions
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 4. Implement PyTorch training service with MLflow integration
+- [x] 4. Implement PyTorch training service with MLflow integration
   - Create LSTM model architecture with attention mechanism for return prediction
   - Implement GRU model architecture with dropout and batch normalization
   - Build training pipeline with hyperparameter optimization support
