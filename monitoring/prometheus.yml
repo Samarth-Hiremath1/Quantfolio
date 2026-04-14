@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'fastapi'
+    static_configs:
+      - targets: ['fastapi:8000']
+
+  - job_name: 'pushgateway'
+    static_configs:
+      - targets: ['pushgateway:9091']
+
+  - job_name: 'airflow'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['airflow-scheduler:8125', 'airflow-webserver:8080']
+      # Note: Airflow requires statsd exporter for custom metrics, or pushing to pushgateway.
+      # For custom model drift and dag metrics, we might use the prometheus pushgateway or standard FastAPI metrics.
