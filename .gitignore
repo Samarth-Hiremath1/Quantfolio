@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+.env.example is fine to commit, but ignore the actual .env
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Postgres and LocalStack Data
+postgres-data/
+localstack-data/
+prometheus-data/
+grafana-data/
+
+# Airflow logs and data
+airflow/logs/
+data/
+
+# Model checkpoints / results
+*.pth
+*.pt
+*.h5
+results/

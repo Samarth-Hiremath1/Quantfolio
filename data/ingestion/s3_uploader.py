@@ -29,6 +29,13 @@ class S3Uploader:
             region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1")
         )
 
+        # Auto-create bucket to prevent NoSuchBucket errors on first run
+        try:
+            self.s3_client.head_bucket(Bucket=self.bucket_name)
+        except ClientError:
+            logger.info(f"Bucket {self.bucket_name} not found. Creating it now...")
+            self.s3_client.create_bucket(Bucket=self.bucket_name)
+
     def upload_csv(self, file_path: str, object_name: Optional[str] = None) -> bool:
         """
         Uploads a local CSV file to the S3 bucket.
