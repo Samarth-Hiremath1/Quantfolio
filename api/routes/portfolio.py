@@ -46,12 +46,16 @@ def optimize_portfolio(request: schemas.OptimizationRequest):
         weights = optimizer.maximize_sharpe()
         
     ret, vol, sharpe = optimizer._portfolio_annualized_performance(weights.values)
+    risk_contributions = optimizer.get_risk_contributions(weights)
+    corr_matrix = rets_df.corr().to_dict()
     
     return {
         "weights": weights.to_dict(),
         "expected_return": ret,
         "expected_volatility": vol,
-        "sharpe_ratio": sharpe
+        "sharpe_ratio": sharpe,
+        "risk_contributions": risk_contributions.to_dict(),
+        "correlation_matrix": corr_matrix
     }
 
 @router.post("/risk", response_model=schemas.RiskResponse)

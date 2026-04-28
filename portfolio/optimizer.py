@@ -40,6 +40,23 @@ class PortfolioOptimizer:
     def _portfolio_volatility(self, weights: np.ndarray):
         return self._portfolio_annualized_performance(weights)[1]
 
+    def get_risk_contributions(self, weights: pd.Series) -> pd.Series:
+        """
+        Calculates the marginal contribution to risk for each asset in the portfolio.
+        Returns a Series of risk contributions (which sum to total portfolio volatility).
+        """
+        w = weights.values
+        vol = self._portfolio_volatility(w)
+        if vol == 0:
+            return pd.Series(0, index=self.asset_names)
+            
+        # Marginal contribution to risk (MCR) = (Cov * w) / vol
+        mcr = np.dot(self.cov_matrix.values, w) / vol
+        
+        # Risk contribution = w * MCR
+        rc = w * mcr
+        return pd.Series(rc, index=self.asset_names)
+
     def maximize_sharpe(self, bounds: tuple = (0.0, 1.0)) -> pd.Series:
         """
         Finds the portfolio weights that maximize the Sharpe ratio.

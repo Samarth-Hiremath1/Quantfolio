@@ -52,6 +52,8 @@ class OptimizationResponse(BaseModel):
     expected_return: float
     expected_volatility: float
     sharpe_ratio: float
+    risk_contributions: Dict[str, float]
+    correlation_matrix: Dict[str, Dict[str, float]]
 
 class RiskResponse(BaseModel):
     sharpe_ratio: float
