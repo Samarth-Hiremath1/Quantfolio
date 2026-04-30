@@ -1,62 +1,78 @@
-import pandas as pd
-import numpy as np
+import queue
 import logging
+from typing import List
+import pandas as pd
+
+from backtesting.data_handler import DataHandler
+from backtesting.strategy import Strategy
+from backtesting.portfolio import Portfolio
+from backtesting.execution import ExecutionHandler
 
 logger = logging.getLogger(__name__)
 
-class VectorizedBacktester:
+class BacktestingEngine:
     """
-    Simulates portfolio equity curves given fractional position targets.
-    Optimized mathematically via Pandas instead of an event-driven loop.
+    The core Event-Driven Engine. Contains the fundamental "while True" queue loop.
+    Properly routes Market, Signal, Order, and Fill events completely destroying any lookahead bias natively.
     """
-
-    def __init__(self, prices: pd.DataFrame, signals: pd.DataFrame, initial_capital: float = 10000.0, transaction_cost_pct: float = 0.001):
-        """
-        :param prices: DataFrame of asset prices (e.g. daily adjusted closes)
-        :param signals: DataFrame of fractional target holdings (ranging from -1.0 to 1.0) for each asset.
-                        Must perfectly match the index/columns of the `prices` DataFrame.
-        :param initial_capital: Starting cash balance.
-        :param transaction_cost_pct: Cost per trade (e.g. slippage + commissions). 0.001 = 0.1% per trade.
-        """
-        self.prices = prices.copy()
+    def __init__(self, data: pd.DataFrame, tickers: List[str], strategy_class, model=None):
+        self.events = queue.Queue()
+        self.data_handler = DataHandler(self.events, data)
         
-        # Shift signals 1 day forward: we can only trade tomorrow based on today's signal!
-        self.target_weights = signals.shift(1).fillna(0)
+        # Initialize strategy (in our Phase 4 case, the ML Strategy)
+        if model is not None:
+            self.strategy = strategy_class(self.data_handler, self.events, tickers, model)
+        else:
+            self.strategy = strategy_class(self.data_handler, self.events, tickers)
+            
+        self.portfolio = Portfolio(self.data_handler, self.events)
+        self.execution_handler = ExecutionHandler(self.events, self.data_handler)
         
-        self.initial_capital = initial_capital
-        self.transaction_cost_pct = transaction_cost_pct
+        self.signals = 0
+        self.orders = 0
+        self.fills = 0
 
-    def run(self) -> pd.DataFrame:
+    def run(self):
         """
-        Executes the backtest and returns a timeseries of portfolio performance metrics.
+        Executes the backtest natively.
         """
-        logger.info("Running vectorized backtest engine...")
+        logger.info("Initializing Event-Driven Backtest...")
         
-        # Asset daily arithmetic returns
-        returns = self.prices.pct_change().fillna(0)
+        while True:
+            # Update the market bars
+            if self.data_handler.continue_backtest == True:
+                self.data_handler.update_bars()
+            else:
+                break
+                
+            # Process ALL events generated from this Market tick before moving to the next time tick
+            while True:
+                try:
+                    event = self.events.get(False)
+                except queue.Empty:
+                    break
+                else:
+                    if event is not None:
+                        if event.type == 'MARKET':
+                            self.strategy.calculate_signals(event)
+                            self.portfolio.update_timeindex(event)
+                            
+                        elif event.type == 'SIGNAL':
+                            self.signals += 1
+                            self.portfolio.update_signal(event)
+                            
+                        elif event.type == 'ORDER':
+                            self.orders += 1
+                            self.execution_handler.execute_order(event)
+                            
+                        elif event.type == 'FILL':
+                            self.fills += 1
+                            self.portfolio.update_fill(event)
 
-        # Portfolio return calculation
-        # Gross portfolio daily return = sum of (weight * asset return)
-        gross_returns = (self.target_weights * returns).sum(axis=1)
-
-        # Transaction costs calculation
-        # Any change in target weight implies a trade.
-        weight_changes = self.target_weights.diff().fillna(0).abs()
-        tx_costs = (weight_changes * self.transaction_cost_pct).sum(axis=1)
+        logger.info("Backtest Complete.")
+        logger.info(f"Final Cash: ${self.portfolio.current_cash:.2f}")
+        total_val = self.portfolio.current_cash + sum(self.portfolio.current_holdings.values())
+        logger.info(f"Final Total Portfolio Value: ${total_val:.2f}")
+        logger.info(f"Signals: {self.signals}, Orders: {self.orders}, Fills: {self.fills}")
         
-        # Net Returns
-        net_returns = gross_returns - tx_costs
-
-        # Cumulative track records
-        cumulative_gross = (1 + gross_returns).cumprod() * self.initial_capital
-        cumulative_net = (1 + net_returns).cumprod() * self.initial_capital
-
-        performance_df = pd.DataFrame({
-            "daily_gross_return": gross_returns,
-            "daily_net_return": net_returns,
-            "equity_gross": cumulative_gross,
-            "equity_net": cumulative_net,
-            "transaction_costs": tx_costs
-        })
-
-        return performance_df
+        return total_val
