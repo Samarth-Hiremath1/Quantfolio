@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import data, portfolio
+from api.routes import data, portfolio, forecast, backtest
 from api.database import engine, Base
 
 # Create tables if they don't exist
@@ -18,6 +18,8 @@ app.add_middleware(
 
 app.include_router(data.router, prefix="/api/v1")
 app.include_router(portfolio.router, prefix="/api/v1")
+app.include_router(forecast.router, prefix="/api/v1")
+app.include_router(backtest.router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():

@@ -72,3 +72,22 @@ class FactorDecompositionResponse(BaseModel):
     factor_loadings: Dict[str, float]
     r_squared: float
     idiosyncratic_risk: float
+
+# Forecasting Requests
+class ForecastRequest(BaseModel):
+    tickers: List[str]
+    model_type: str = "LSTM" # 'LSTM' or 'Transformer'
+
+class ForecastResponse(BaseModel):
+    forecasts: Dict[str, List[float]]
+
+# Backtesting Requests
+class BacktestRequest(BaseModel):
+    tickers: List[str]
+    strategy: str = "ML_Forecast"
+    initial_capital: float = 100000.0
+    
+class BacktestResponse(BaseModel):
+    final_value: float
+    total_return_pct: float
+    total_trades: int
