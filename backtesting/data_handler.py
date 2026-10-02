@@ -15,13 +15,40 @@ class DataHandler:
         """
         self.events = events
         self.symbol_data = historical_dataframe
-        
+
+        # Guard against the (feature, ticker) / (ticker, feature) mix-up that
+        # silently produced empty bars, zero fills and a 0% return rather than
+        # an error. See KNOWN_ISSUES.md D-02.
+        self._validate_column_orientation(historical_dataframe)
+
         # Sort index ensuring chronological order
         self.symbol_data.sort_index(inplace=True)
-        
+
         self.continue_backtest = True
         self._data_generator = self._get_new_bar()
         self.latest_symbol_data = []
+
+    @staticmethod
+    def _validate_column_orientation(df):
+        """
+        Columns must be a MultiIndex oriented as (ticker, feature). If they look
+        like (feature, ticker) -- i.e. level 0 holds OHLCV field names -- fail
+        loudly with an actionable message instead of returning empty bars.
+        """
+        import pandas as pd
+        if not isinstance(df.columns, pd.MultiIndex):
+            raise ValueError(
+                "DataHandler expects a MultiIndex column frame oriented as "
+                "(ticker, feature); got a flat column index."
+            )
+        ohlcv_fields = {"open", "high", "low", "close", "adj_close", "volume"}
+        level0 = {str(v).lower() for v in df.columns.get_level_values(0).unique()}
+        if level0 & ohlcv_fields:
+            raise ValueError(
+                "DataHandler received columns oriented as (feature, ticker) but "
+                "requires (ticker, feature). Fix with "
+                "`df.swaplevel(axis=1).sort_index(axis=1)`."
+            )
 
     def _get_new_bar(self):
         """

@@ -17,13 +17,37 @@ class Portfolio:
         self.current_positions = {} # ticker: quantity
         self.current_holdings = {}  # ticker: value in $
 
+        # Time series of (timestamp, total_value). Without this no risk-adjusted
+        # metric (Sharpe / drawdown / vol) can be computed from a backtest --
+        # only a single final value. See KNOWN_ISSUES.md D-07.
+        self.equity_curve = []
+
     def update_timeindex(self, event):
         """
-        Updates the value of holdings based on the latest MARKET event prices.
+        Updates the value of holdings based on the latest MARKET event prices,
+        and records a point on the equity curve.
         """
         for ticker, qty in self.current_positions.items():
             latest_price = self.data_handler.get_latest_bar_value(ticker, 'adj_close')
             self.current_holdings[ticker] = qty * latest_price
+
+        if self.data_handler.latest_symbol_data:
+            timestamp = self.data_handler.latest_symbol_data[-1][0]
+            total_value = self.current_cash + sum(self.current_holdings.values())
+            self.equity_curve.append((timestamp, total_value))
+
+    def get_equity_curve(self):
+        """
+        Returns the equity curve as a DataFrame indexed by timestamp with a
+        `total_value` column and a `returns` column, ready for RiskMetrics.
+        """
+        import pandas as pd
+        if not self.equity_curve:
+            return pd.DataFrame(columns=["total_value", "returns"])
+        df = pd.DataFrame(self.equity_curve, columns=["timestamp", "total_value"])
+        df = df.set_index("timestamp")
+        df["returns"] = df["total_value"].pct_change().fillna(0.0)
+        return df
 
     def update_signal(self, event):
         """

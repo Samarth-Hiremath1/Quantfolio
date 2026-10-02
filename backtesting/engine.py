@@ -18,13 +18,13 @@ class BacktestingEngine:
     def __init__(self, data: pd.DataFrame, tickers: List[str], strategy_class, model=None):
         self.events = queue.Queue()
         self.data_handler = DataHandler(self.events, data)
-        
-        # Initialize strategy (in our Phase 4 case, the ML Strategy)
-        if model is not None:
-            self.strategy = strategy_class(self.data_handler, self.events, tickers, model)
-        else:
-            self.strategy = strategy_class(self.data_handler, self.events, tickers)
-            
+
+        # Initialize strategy. `model` is optional and passed uniformly; strategies
+        # that do not use a model accept it as a keyword and ignore it.
+        # (Previously this branched and called the 3-arg form when model was None,
+        # which raised TypeError for model-taking strategies -- see KNOWN_ISSUES D-01.)
+        self.strategy = strategy_class(self.data_handler, self.events, tickers, model)
+
         self.portfolio = Portfolio(self.data_handler, self.events)
         self.execution_handler = ExecutionHandler(self.events, self.data_handler)
         
