@@ -1,0 +1,12 @@
+# Offline benchmark + test dependencies (no Docker needed)
+numpy
+pandas
+scipy
+scikit-learn
+statsmodels
+matplotlib
+torch
+fastapi
+httpx
+sqlalchemy
+pytest
